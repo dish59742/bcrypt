@@ -129,8 +129,8 @@ jobs:
           ../.venv/bin/python setup.py bdist_wheel --plat-name=manylinux2014_aarch64 && \
           ls dist/ && \
           unzip dist/*.whl && \
-          ls dist && \
-          file dist/_bcrypt.abi3.so && \
+          ls && \
+          file bcrypt/_bcrypt.abi3.so && \
           mv dist/bcrypt*.whl ../tmpwheelhouse && \
           popd '
           #auditwheel repair tmpwheelhouse/bcrypt*.whl -w wheelhouse/ && \
