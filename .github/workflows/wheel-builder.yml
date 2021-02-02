@@ -120,7 +120,7 @@ jobs:
           mkdir -p /github/home/.cache/pip && \
           chown -R $(whoami) /github/home/.cache && \
           export LDSHARED="aarch64-unknown-linux-gnueabi-gcc -pthread -shared" && \
-          /opt/python/${{ matrix.PYTHON.VERSION }}/bin/python -m venv .venv && \
+          /opt/python/${{ env.py }}/bin/python -m venv .venv && \
           .venv/bin/pip install -U pip wheel cffi six && \
           .venv/bin/pip download bcrypt==${{ github.event.inputs.version }} --no-deps --no-binary bcrypt && \
           tar zxvf bcrypt*.tar.gz && \
