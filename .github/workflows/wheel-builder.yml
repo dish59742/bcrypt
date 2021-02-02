@@ -96,41 +96,45 @@ jobs:
           name: "bcrypt-${{ github.event.inputs.version }}-${{ matrix.WINDOWS }}-${{ matrix.PYTHON.ABI_VERSION }}"
           path: bcrypt-wheelhouse\
 
-  manylinux-arm64:
-    name: "${{ matrix.PYTHON.ABI_VERSION }} manylinux2014-aarch64"
-    runs-on: ubuntu-latest
+  build-linux:
+    name: Linux
     strategy:
-       matrix:
-        PYTHON:
-          - {VERSION: "cp36-cp36m", ABI_VERSION: 'cp36'}
+      matrix:
+        pyver: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
+        arch: [aarch64]
+      fail-fast: false
+    runs-on: ubuntu-latest
+    env:
+      py: /opt/python/${{ matrix.pyver }}/bin/python
+      img: dockcross/manylinux2014-${{ matrix.arch }}
+    #needs: pre-deploy
     steps:
-      - uses: actions/checkout@v2
-      #- run: |
-          #docker run --rm --privileged hypriot/qemu-register
-      - uses: dockcross/manylinux2014-aarch64
-        # The weird pip cache nonsense below is due to docker ownership issues. We want
-        # a cache because otherwise we end up building cffi twice.
-        with:
-          args: |
-              bash -c "set -xe;
-              mkdir -p /github/home/.cache/pip;
-              chown -R $(whoami) /github/home/.cache;
-              export LDSHARED="aarch64-unknown-linux-gnueabi-gcc -pthread -shared";
-              /opt/python/${{ matrix.PYTHON.VERSION }}/bin/python -m venv .venv;
-              .venv/bin/pip install -U pip wheel cffi six;
-              .venv/bin/pip download bcrypt==${{ github.event.inputs.version }} --no-deps --no-binary bcrypt;
-              tar zxvf bcrypt*.tar.gz;
-              mkdir tmpwheelhouse;
-              pushd bcrypt*;
-              ../.venv/bin/python setup.py bdist_wheel --plat-name=manylinux2014_aarch64;
-              mv dist/bcrypt*.whl ../tmpwheelhouse;
-              popd;
-              auditwheel repair tmpwheelhouse/bcrypt*.whl -w wheelhouse/;
-              .venv/bin/pip install bcrypt --no-index -f wheelhouse/;
-              .venv/bin/python -c \"import bcrypt; password = b'super secret password';hashed = bcrypt.hashpw(password, bcrypt.gensalt());bcrypt.checkpw(password, hashed)\";"
-      - run: mkdir bcrypt-wheelhouse
-      - run: sudo mv wheelhouse/bcrypt*.whl bcrypt-wheelhouse/
-      - uses: actions/upload-artifact@v1
-        with:
-          name: "bcrypt-${{ github.event.inputs.version }}-manylinux2014-aarch64-${{ matrix.PYTHON.ABI_VERSION }}"
-          path: bcrypt-wheelhouse/
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Make wheel
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -c '\
+          set -xe &&\
+          mkdir -p /github/home/.cache/pip && \
+          chown -R $(whoami) /github/home/.cache && \
+          export LDSHARED="aarch64-unknown-linux-gnueabi-gcc -pthread -shared" && \
+          /opt/python/${{ matrix.PYTHON.VERSION }}/bin/python -m venv .venv && \
+          .venv/bin/pip install -U pip wheel cffi six && \
+          .venv/bin/pip download bcrypt==${{ github.event.inputs.version }} --no-deps --no-binary bcrypt && \
+          tar zxvf bcrypt*.tar.gz && \
+          mkdir tmpwheelhouse && \
+          pushd bcrypt* && \
+          ../.venv/bin/python setup.py bdist_wheel --plat-name=manylinux2014_aarch64 && \
+          mv dist/bcrypt*.whl ../tmpwheelhouse && \
+          popd '
+          #auditwheel repair tmpwheelhouse/bcrypt*.whl -w wheelhouse/ && \
+          #.venv/bin/pip install bcrypt --no-index -f wheelhouse/ && \
+          #.venv/bin/python -c \"import bcrypt; password = b'super secret password';hashed = bcrypt.hashpw(password, bcrypt.gensalt());bcrypt.checkpw(password, hashed)\"
+      #- run: mkdir bcrypt-wheelhouse
+      #- run: sudo mv wheelhouse/bcrypt*.whl bcrypt-wheelhouse/
+      #- uses: actions/upload-artifact@v1
+      #  with:
+       #   name: "bcrypt-${{ github.event.inputs.version }}-manylinux2014-aarch64-${{ matrix.PYTHON.ABI_VERSION }}"
+       #   path: bcrypt-wheelhouse/
