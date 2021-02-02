@@ -122,7 +122,7 @@ jobs:
           export LDSHARED="aarch64-unknown-linux-gnueabi-gcc -pthread -shared" && \
           ${{ env.py }} -m venv .venv && \
           .venv/bin/pip install -U pip wheel cffi six && \
-          .venv/bin/pip download bcrypt==${{ github.event.inputs.version }} --no-deps --no-binary bcrypt && \
+          .venv/bin/pip download bcrypt==3.2.1 --no-deps --no-binary bcrypt && \
           tar zxvf bcrypt*.tar.gz && \
           mkdir tmpwheelhouse && \
           pushd bcrypt* && \
