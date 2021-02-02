@@ -107,9 +107,9 @@ jobs:
           - {VERSION: "cp36-cp36m", ABI_VERSION: 'cp36'}
     steps:
       - uses: actions/checkout@v2
-      - run: |
-          docker run --rm --privileged hypriot/qemu-register
-      - uses: docker://quay.io/pypa/manylinux2014_aarch64
+      #- run: |
+          #docker run --rm --privileged hypriot/qemu-register
+      - uses: dockcross/manylinux2014-aarch64
         # The weird pip cache nonsense below is due to docker ownership issues. We want
         # a cache because otherwise we end up building cffi twice.
         with:
@@ -117,13 +117,14 @@ jobs:
               bash -c "set -xe;
               mkdir -p /github/home/.cache/pip;
               chown -R $(whoami) /github/home/.cache;
+              export LDSHARED="aarch64-unknown-linux-gnueabi-gcc -pthread -shared";
               /opt/python/${{ matrix.PYTHON.VERSION }}/bin/python -m venv .venv;
               .venv/bin/pip install -U pip wheel cffi six;
               .venv/bin/pip download bcrypt==${{ github.event.inputs.version }} --no-deps --no-binary bcrypt;
               tar zxvf bcrypt*.tar.gz;
               mkdir tmpwheelhouse;
               pushd bcrypt*;
-              ../.venv/bin/python setup.py bdist_wheel --py-limited-api=${{ matrix.PYTHON.ABI_VERSION }};
+              ../.venv/bin/python setup.py bdist_wheel --plat-name=manylinux2014_aarch64;
               mv dist/bcrypt*.whl ../tmpwheelhouse;
               popd;
               auditwheel repair tmpwheelhouse/bcrypt*.whl -w wheelhouse/;
