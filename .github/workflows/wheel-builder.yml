@@ -127,6 +127,7 @@ jobs:
           mkdir tmpwheelhouse && \
           pushd bcrypt* && \
           ../.venv/bin/python setup.py bdist_wheel --plat-name=manylinux2014_aarch64 && \
+          ls dist/ && \
           unzip dist/*.whl && \
           ls dist && \
           file dist/_bcrypt.abi3.so && \
