@@ -1,10 +1,8 @@
 name: Wheel Builder
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        required: true
-
+  push:
+    branches:
+      - master
 
 jobs:
   manylinux:
